@@ -15,6 +15,10 @@
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/log/attributes.hpp"
 #include "boost/log/attributes/scoped_attribute.hpp"
+#include "boost/log/sinks/sink.hpp"
+
+extern const char *log_path;
+extern int log_level;
 
 namespace logging = boost::log;
 namespace sinks = boost::log::sinks;
@@ -24,7 +28,7 @@ namespace attrs = boost::log::attributes;
 namespace keywords = boost::log::keywords;
 
 enum severity_level {
-    debug,
+    debug=0,
     warning,
     error,
     critical
@@ -56,8 +60,8 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp,"TimeStamp",boost::posix_time::ptime)
 BOOST_LOG_ATTRIBUTE_KEYWORD(scope, "Scope", attrs::named_scope::value_type)
 BOOST_LOG_ATTRIBUTE_KEYWORD(timeline, "Timeline", attrs::timer::value_type)
 
-#define log_debug BOOST_LOG_SEV(my_logger::get(),debug) << "file:(" << __FILE__ << "-->line:" << __LINE__ << ") "
-#define log_warning BOOST_LOG_SEV(my_logger::get(),warning) << "file:(" << __FILE__ << "-->line:" << __LINE__ << ") "
+#define log_debug BOOST_LOG_SEV(my_logger::get(),debug) << "(" << __FILE__ << ":" << __LINE__ << ") "
+#define log_warning BOOST_LOG_SEV(my_logger::get(),warning) << "(" << __FILE__ << ":" << __LINE__ << ") "
 #define log_time_line BOOST_LOG_SCOPED_THREAD_ATTR("Timeline", attrs::timer())
 
 void initBoostFileLog();

@@ -1,15 +1,24 @@
 ﻿#include "boostlog.h"
-#include "Windows.h"
+#include <QtGlobal>
+
+const char *log_path = NULL;
+int log_level = 0;
 
 //文件日志
 void initBoostFileLog()
 {
-    char buf[512];
-    GetModuleFileNameA(NULL,buf,512);
-    *strrchr(buf,'\\') = '\0';
+    if(!log_path)
+        return;
+    char buf[1024];
+    strcpy(buf,log_path);
+#if defined(Q_OS_WIN32)
     strcat(buf, "\\log_%Y-%m-%d_%H-%M-%S.txt");
-    const char *file_name = buf;
+#elif defined(Q_OS_UNIX)
+    strcat(buf, "/log_%Y-%m-%d_%H-%M-%S.txt");
+#endif
 
+    std::cout << "buf:" << buf << std::endl;
+    const char *file_name = buf;
     auto sink = logging::add_file_log
             (
                 keywords::file_name = file_name,
@@ -18,16 +27,14 @@ void initBoostFileLog()
                 keywords::format = expr::stream
                 << expr::format_date_time(timestamp, "%Y-%m-%d %H:%M:%S")
                 << ": <" << severity << "> "
-                << expr::if_(expr::has_attr(scope))
-                [
-                    expr::stream << "scope:(" << scope << ") "
-                ]
                 << expr::if_(expr::has_attr(timeline))
                 [
-                    expr::stream << "timeLine:[" << timeline << "] "
+                    expr::stream << "[" << timeline << "] "
                 ]
                 << expr::message
             );
+    if(log_level)
+        sink->set_filter(expr::attr< severity_level >("Severity") >= 1);
     sink->locked_backend()->auto_flush(true);//使日志实时更新
     logging::add_common_attributes();
 }
@@ -41,17 +48,14 @@ void initBoostConsoleLog()
                 keywords::format = expr::stream
                 << expr::format_date_time(timestamp, "%Y-%m-%d %H:%M:%S")
                 << ": <" << severity << "> "
-                << expr::if_(expr::has_attr(scope))
-                [
-                    expr::stream << "scope:(" << scope << ") "
-                ]
                 << expr::if_(expr::has_attr(timeline))
                 [
-                    expr::stream << "timeLine:[" << timeline << "] "
+                    expr::stream << "[" << timeline << "] "
                 ]
                 << expr::message
             );
+    if(log_level)
+        sink->set_filter(expr::attr< severity_level >("Severity") >= 1);
     sink->locked_backend()->auto_flush(true);//使日志实时更新
     logging::add_common_attributes();
-//    logging::core::get()->add_global_attribute("Scope", attrs::named_scope());
 }
